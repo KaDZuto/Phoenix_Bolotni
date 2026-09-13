@@ -1,0 +1,18 @@
+{
+  "anas_platyrhynchos": 0,
+  "ardea_cinerea": 1,
+  "carduelis_carduelis": 2,
+  "coloeus_monedula": 3,
+  "columba_palumbus": 4,
+  "corvus_frugilegus": 5,
+  "fringilla_coelebs": 6,
+  "hirundo_rustica": 7,
+  "luscinia_luscinia": 8,
+  "luscinia_svecica": 9,
+  "motacilla_alba": 10,
+  "parus_major": 11,
+  "pica_pica": 12,
+  "strix_aluco": 13,
+  "turdus_merula": 14,
+  "turdus_ruficollis": 15
+}
