@@ -1,76 +1,76 @@
 # Phoenix_Bolotni 🐦
 
-Bird species identification system based on audio classification. This project uses a deep learning approach to identify birds by their songs/calls, utilizing a pre-trained EfficientNet-B0 model acting on Log-Mel Spectrograms.
+Система распознавания видов птиц по аудиозаписям на базе глубокого обучения.
 
-## 🚀 How it Works
+## 🚀 Как это работает
 
-1. **Audio Processing**: Audio files are resampled to 32,000 Hz and cropped/padded to a 5-second clip.
-2. **Feature Extraction**: The audio is converted into a Log-Mel Spectrogram (128 Mel bins, 1024 FFT size, 320 hop length).
-3. **Normalization**: The spectrogram is normalized to have zero mean and unit variance.
-4. **Classification**: The normalized spectrogram is treated as a 3-channel image and passed through an **EfficientNet-B0** model (pre-trained on ImageNet), which classifies the bird species.
+Программа анализирует аудиозапись, превращает её в визуальный образ (спектрограмму) и с помощью нейросети **EfficientNet-B0** определяет, какой птице принадлежит этот звук.
+
+**Технический процесс:**
+1. **Препроцессинг**: Аудио переводится в моно, ресемплируется до **32 000 Гц**, обрезается или дополняется до **5 секунд**.
+2. **Извлечение признаков**: Создается **Log-Mel спектрограмма** (128 мел-бинов, FFT 1024, шаг 320).
+3. **Классификация**: Спектрограмма подается в нейросеть, которая выдает наиболее вероятный вид птицы.
 
 ---
 
-## 🛠 How to Fine-Tune on New Birds
+## 🛠 Инструкция по дообучению (для новых птиц)
 
-If you want to add new bird species or improve the model's accuracy, follow these steps:
+Теперь вам не нужно работать в ноутбуках — всё упаковано в готовые скрипты.
 
-### 1. Prepare the Dataset
-Organize your audio files in the following directory structure:
+### 1. Подготовка данных
+Создайте папку `dataset` и разложите записи птиц по подпапкам (название папки = название вида):
 ```text
 dataset/
-├── species_a/
-│   ├── clip1.wav
-│   ├── clip2.wav
+├── соловей/
+│   ├── запись1.wav
+│   └── запись2.wav
+├── синица_большая/
+│   ├── запись1.wav
 │   └── ...
-├── species_b/
-│   ├── clip1.wav
-│   └── ...
-└── new_bird_species/
-    ├── clip1.wav
-    └── ...
+└── новая_птица/
+    └── запись1.wav
 ```
-- **Format**: Files must be in `.wav` format.
-- **Content**: Ensure you have as many samples as possible for each species (aim for 100-200 clips per class for better results).
+*Важно: файлы должны быть в формате `.wav`.*
 
-### 2. Setup the Environment
-You will need Python 3.10+ and a GPU (NVIDIA) for efficient training.
+### 2. Установка окружения
+Вам понадобится Python 3.10+ и видеокарта NVIDIA с поддержкой CUDA.
 ```bash
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-pip install tqdm scikit-learn soundfile matplotlib
+pip install tqdm scikit-learn soundfile matplotlib numpy
 ```
 
-### 3. Training the Model
-Use the provided Jupyter Notebooks (found in the `train/` directory of the original source):
-1. **`prepairing_dataset_sipuha.ipynb`**: Run this first to verify your dataset, check for missing classes, and generate metadata (`classes.json`, `label2idx.json`).
-2. **`train_sipuha.ipynb`**: 
-   - Set `DATA_DIR` to your dataset path.
-   - Ensure `USE_IMAGENET_WEIGHTS = True` for faster convergence.
-   - Run the training loop. The script uses **SpecAugment** and **WeightedRandomSampling** to handle imbalances.
-   - The best model based on Macro-F1 score will be saved as `best.pth`.
+### 3. Запуск процесса
 
-### 4. Exporting for Android
-To use the trained model in the Android app:
-1. **Convert to ONNX**: Use `torch.onnx.export` to convert the `.pth` model to the ONNX format.
-   ```python
-   import torch
-   # Load model architecture and state_dict from best.pth
-   # Create a dummy input [1, 3, 128, 501]
-   torch.onnx.export(model, dummy_input, "bird_model.onnx", opset_version=11)
-   ```
-2. **Integrate**: Replace the `.onnx` file in the Android project's assets folder with your new model.
-3. **Update Labels**: Ensure the `classes.json` labels in the app match the order of the labels used during training.
+**Шаг А: Подготовка метаданных**
+Запустите скрипт подготовки. Он просканирует ваши папки и создаст списки для обучения.
+```bash
+python prepare_data.py
+```
+После этого в папке `artifacts/` появятся файлы `train.jsonl`, `val.jsonl` и `classes.json`.
+
+**Шаг Б: Обучение модели**
+Запустите основной процесс обучения:
+```bash
+python train.py
+```
+Скрипт будет обучаться несколько эпох. Лучшая модель (с самым высоким F1-score) автоматически сохранится в файл `model_output/best.pth`.
+
+### 4. Использование в приложении
+Чтобы добавить новую модель в Android-приложение:
+1. Конвертируйте `.pth` в формат `.onnx` (через `torch.onnx.export`).
+2. Замените файл модели в папке `assets` приложения.
+3. Обновите список названий птиц в приложении, чтобы они совпадали с `classes.json`.
 
 ---
 
-## 📊 Technical Specifications
+## 📊 Технические характеристики
 
-| Parameter | Value |
+| Параметр | Значение |
 | :--- | :--- |
-| Sample Rate | 32,000 Hz |
-| Clip Duration | 5.0 seconds |
-| FFT Size | 1024 |
-| Hop Length | 320 |
-| Mel Bins | 128 |
-| Base Model | EfficientNet-B0 |
-| Target Format | ONNX |
+| Частота дискретизации | 32 000 Гц |
+| Длительность клипа | 5.0 секунд |
+| Размер FFT | 1024 |
+| Шаг (Hop Length) | 320 |
+| Мел-бинов | 128 |
+| Архитектура | EfficientNet-B0 |
+| Формат экспорта | ONNX |
