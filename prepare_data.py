@@ -3,10 +3,16 @@ from pathlib import Path
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-def prepare_dataset(data_dir="./dataset", artifacts_dir="./artifacts"):
+from scripts.validate_dataset import validate_dataset
+
+def prepare_dataset(data_dir="./dataset", artifacts_dir="./artifacts", skip_validation=False):
     data_path = Path(data_dir)
     art_path = Path(artifacts_dir)
     art_path.mkdir(parents=True, exist_ok=True)
+
+    if not skip_validation:
+        print("🔍 Валидация датасета против whitelist РФ...")
+        validate_dataset(data_dir=data_dir, report_path=str(art_path / "validation_report.json"))
 
     print(f"🔍 Сканирование датасета в: {data_path.resolve()}")
     
