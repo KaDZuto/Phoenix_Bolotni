@@ -1,0 +1,818 @@
+{
+  "accipiter_gentilis": {
+    "ru": "Тетеревятник",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "accipiter_nisus": {
+    "ru": "Перепелятник",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "acrocephalus_arundinaceus": {
+    "ru": "Дроздовидная камышевка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "acrocephalus_palustris": {
+    "ru": "Болотная камышевка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "acrocephalus_schoenobaenus": {
+    "ru": "Камышевка-барсучок",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "acrocephalus_scirpaceus": {
+    "ru": "Тростниковая камышевка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "actitis_hypoleucos": {
+    "ru": "Перевозчик",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "aegolius_funereus": {
+    "ru": "Мохноногий сыч",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "alauda_arvensis": {
+    "ru": "Полевой жаворонок",
+    "habitat": "field_steppe",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "alcedo_atthis": {
+    "ru": "Обыкновенный зимородок",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "anas_acuta": {
+    "ru": "Шилохвость",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "anas_crecca": {
+    "ru": "Чирок-свистунок",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "anas_platyrhynchos": {
+    "ru": "Кряква",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "anser_albifrons": {
+    "ru": "Белолобый гусь",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "anser_anser": {
+    "ru": "Серый гусь",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "anser_fabalis": {
+    "ru": "Гуменник",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "apus_apus": {
+    "ru": "Чёрный стриж",
+    "habitat": "urban",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "ardea_alba": {
+    "ru": "Большая белая цапля",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "ardea_cinerea": {
+    "ru": "Серая цапля",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "ardea_purpurea": {
+    "ru": "Рыжая цапля",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "asio_otus": {
+    "ru": "Ушастая сова",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "aythya_ferina": {
+    "ru": "Красноголовый нырок",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "aythya_fuligula": {
+    "ru": "Хохлатая чернеть",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "aythya_marila": {
+    "ru": "Морская чернеть",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "botaurus_stellaris": {
+    "ru": "Большая выпь",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "branta_ruficollis": {
+    "ru": "Краснозобая казарка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "bubo_bubo": {
+    "ru": "Филин",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "bucephala_clangula": {
+    "ru": "Обыкновенный гоголь",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "buteo_buteo": {
+    "ru": "Обыкновенный канюк",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "carduelis_carduelis": {
+    "ru": "Черноголовый щегол",
+    "habitat": "field_steppe",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "certhia_familiaris": {
+    "ru": "Обыкновенная пищуха",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "charadrius_dubius": {
+    "ru": "Малый зуёк",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "charadrius_hiaticula": {
+    "ru": "Галстучник",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "chlidonias_leucopterus": {
+    "ru": "Белокрылая крачка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "chlidonias_niger": {
+    "ru": "Чёрная крачка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "chroicocephalus_ridibundus": {
+    "ru": "Озёрная чайка (синоним)",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "ciconia_ciconia": {
+    "ru": "Белый аист",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "ciconia_nigra": {
+    "ru": "Чёрный аист",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "coccothraustes_coccothraustes": {
+    "ru": "Обыкновенный дубонос",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "coloeus_monedula": {
+    "ru": "Галка",
+    "habitat": "urban",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "columba_livia": {
+    "ru": "Сизый голубь",
+    "habitat": "urban",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "columba_palumbus": {
+    "ru": "Вяхирь",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "corvus_corax": {
+    "ru": "Ворон",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "corvus_cornix": {
+    "ru": "Серая ворона",
+    "habitat": "urban",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "corvus_frugilegus": {
+    "ru": "Грач",
+    "habitat": "field_steppe",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "coturnix_coturnix": {
+    "ru": "Обыкновенный перепел",
+    "habitat": "field_steppe",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "crex_crex": {
+    "ru": "Коростель",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "cyanistes_caeruleus": {
+    "ru": "Обыкновенная лазоревка",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "cygnus_columbianus": {
+    "ru": "Малый лебедь",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "cygnus_cygnus": {
+    "ru": "Лебедь-кликун",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "cygnus_olor": {
+    "ru": "Лебедь-шипун",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "delichon_urbicum": {
+    "ru": "Городская ласточка (воронок)",
+    "habitat": "urban",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "dendrocopos_major": {
+    "ru": "Большой пёстрый дятел",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "dendrocopos_minor": {
+    "ru": "Малый пёстрый дятел",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "dryocopus_martius": {
+    "ru": "Желна (чёрный дятел)",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "emberiza_citrinella": {
+    "ru": "Обыкновенная овсянка",
+    "habitat": "field_steppe",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "emberiza_schoeniclus": {
+    "ru": "Тростниковая овсянка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "erithacus_rubecula": {
+    "ru": "Зарянка",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "falco_tinnunculus": {
+    "ru": "Обыкновенная пустельга",
+    "habitat": "field_steppe",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "fringilla_coelebs": {
+    "ru": "Зяблик",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "fulica_atra": {
+    "ru": "Лысуха",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "gallinago_gallinago": {
+    "ru": "Бекас",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "gallinula_chloropus": {
+    "ru": "Камышница",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "garrulus_glandarius": {
+    "ru": "Обыкновенная сойка",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "glaucidium_passerinum": {
+    "ru": "Воробьиный сычик",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "grus_grus": {
+    "ru": "Серый журавль",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "haematopus_ostralegus": {
+    "ru": "Кулик-сорока",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "himantopus_himantopus": {
+    "ru": "Ходулочник",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "hirundo_rustica": {
+    "ru": "Деревенская ласточка",
+    "habitat": "urban",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "ixobrychus_minutus": {
+    "ru": "Малая выпь",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "lagopus_lagopus": {
+    "ru": "Белая куропатка",
+    "habitat": "other",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "larus_argentatus": {
+    "ru": "Серебристая чайка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "larus_canus": {
+    "ru": "Сизая чайка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "larus_ridibundus": {
+    "ru": "Озёрная чайка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "limosa_limosa": {
+    "ru": "Большой веретенник",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "locustella_fluviatilis": {
+    "ru": "Речной сверчок",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "locustella_luscinioides": {
+    "ru": "Соловьиный сверчок",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "luscinia_luscinia": {
+    "ru": "Обыкновенный соловей",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "luscinia_svecica": {
+    "ru": "Варакушка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "lymnocryptes_minimus": {
+    "ru": "Гаршнеп",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "lyrurus_tetrix": {
+    "ru": "Тетерев-косач",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "mareca_penelope": {
+    "ru": "Свиязь",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "mareca_strepera": {
+    "ru": "Серая утка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "mergellus_albellus": {
+    "ru": "Луток",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "mergus_merganser": {
+    "ru": "Большой крохаль",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "mergus_serrator": {
+    "ru": "Длинноносый крохаль",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "miliaria_calandra": {
+    "ru": "Просянка",
+    "habitat": "field_steppe",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "motacilla_alba": {
+    "ru": "Белая трясогузка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "numenius_arquata": {
+    "ru": "Большой кроншнеп",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "oriolus_oriolus": {
+    "ru": "Обыкновенная иволга",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "panurus_biarmicus": {
+    "ru": "Усатая синица",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "parus_major": {
+    "ru": "Большая синица",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "passer_domesticus": {
+    "ru": "Домовый воробей",
+    "habitat": "urban",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "passer_montanus": {
+    "ru": "Полевой воробей",
+    "habitat": "urban",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "perdix_perdix": {
+    "ru": "Серая куропатка",
+    "habitat": "field_steppe",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "phylloscopus_collybita": {
+    "ru": "Пеночка-теньковка",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "phylloscopus_sibilatrix": {
+    "ru": "Пеночка-трещотка",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "phylloscopus_trochilus": {
+    "ru": "Пеночка-весничка",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "pica_pica": {
+    "ru": "Обыкновенная сорока",
+    "habitat": "urban",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "platalea_leucorodia": {
+    "ru": "Колпица",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "plectrophenax_nivalis": {
+    "ru": "Пуночка",
+    "habitat": "other",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "plegadis_falcinellus": {
+    "ru": "Каравайка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "podiceps_auritus": {
+    "ru": "Красношейная поганка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "podiceps_cristatus": {
+    "ru": "Большая поганка (чомга)",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "podiceps_grisegena": {
+    "ru": "Серощёкая поганка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "poecile_montanus": {
+    "ru": "Буроголовая гаичка (пухляк)",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "porzana_porzana": {
+    "ru": "Погоныш",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "pyrrhula_pyrrhula": {
+    "ru": "Обыкновенный снегирь",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "rallus_aquaticus": {
+    "ru": "Водяной пастушок",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "recurvirostra_avosetta": {
+    "ru": "Шилоклювка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "saxicola_rubetra": {
+    "ru": "Луговой чекан",
+    "habitat": "field_steppe",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "saxicola_rubicola": {
+    "ru": "Черноголовый чекан",
+    "habitat": "field_steppe",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "sitta_europaea": {
+    "ru": "Обыкновенный поползень",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "spatula_clypeata": {
+    "ru": "Широконоска",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "spatula_querquedula": {
+    "ru": "Чирок-трескунок",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "sterna_hirundo": {
+    "ru": "Речная крачка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "strix_aluco": {
+    "ru": "Обыкновенная неясыть",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "sylvia_atricapilla": {
+    "ru": "Черноголовая славка",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "sylvia_borin": {
+    "ru": "Садовая славка",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "sylvia_communis": {
+    "ru": "Серая славка",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "tachybaptus_ruficollis": {
+    "ru": "Малая поганка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "tadorna_ferruginea": {
+    "ru": "Огарь",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "tadorna_tadorna": {
+    "ru": "Пеганка",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "tetrao_urogallus": {
+    "ru": "Глухарь",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "tetrastes_bonasia": {
+    "ru": "Рябчик",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "tringa_glareola": {
+    "ru": "Фифи",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "tringa_nebularia": {
+    "ru": "Большой улит",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "tringa_ochropus": {
+    "ru": "Черныш",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "tringa_totanus": {
+    "ru": "Травник",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "turdus_iliacus": {
+    "ru": "Белобровик",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "turdus_merula": {
+    "ru": "Чёрный дрозд",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "turdus_philomelos": {
+    "ru": "Певчий дрозд",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "turdus_pilaris": {
+    "ru": "Дрозд-рябинник",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "turdus_ruficollis": {
+    "ru": "Чернозобый дрозд",
+    "habitat": "forest",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "vanellus_vanellus": {
+    "ru": "Чибис",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  },
+  "zapornia_parva": {
+    "ru": "Малый погоныш",
+    "habitat": "wetland",
+    "wetland_affinity": null,
+    "notes": ""
+  }
+}
