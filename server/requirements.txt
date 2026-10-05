@@ -1,0 +1,23 @@
+# Зависимости серверного распознавателя Phoenix_Bolotni (папка server/).
+# Базовые ML-зависимости (torch, torchaudio, onnxruntime, soundfile, numpy, scipy)
+# берутся из корневого requirements.txt репозитория модели.
+
+# HTTP API (публичный релей /ingest + API карты)
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9
+
+# БД: Postgres + PostGIS в проде, SQLite для локальной разработки и тестов
+SQLAlchemy>=2.0.30
+alembic>=1.13.0
+psycopg[binary]>=3.2.0
+
+# Геоаналитика (зоны активности, KDE, полигоны покрытия)
+scipy>=1.11.0
+shapely>=2.0.0
+numpy>=1.24.0,<3.0.0
+soundfile>=0.12.0
+
+# Тесты
+pytest>=7.0.0
+httpx>=0.27.0

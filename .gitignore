@@ -19,4 +19,9 @@ collector.db*
 telegram_bot/tmp/
 telegram_bot/venv/
 *.zip
+server/data/
+server/.env
+server/debug_audio/
+server/*.db
+server/*.db-journal
 
