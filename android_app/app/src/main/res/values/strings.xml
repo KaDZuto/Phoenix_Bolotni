@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Феникс Болотный</string>
+    <string name="channel_name">Служба распознавания птиц</string>
+    <string name="channel_desc">Непрерывный мониторинг звуков птиц в реальном времени</string>
+    <string name="listening_active">Идёт прослушивание окружения…</string>
+    <string name="listening_paused">Прослушивание приостановлено</string>
+    <string name="action_pause">Пауза</string>
+    <string name="action_resume">Возобновить</string>
+    <string name="action_stop">Остановить</string>
+</resources>

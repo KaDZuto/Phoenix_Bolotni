@@ -1,0 +1,13 @@
+{
+  "target_sr": 32000,
+  "n_fft": 1024,
+  "hop": 320,
+  "n_mels": 128,
+  "clip_seconds": 5.0,
+  "noise_class_slug": "_noise",
+  "confidence_threshold": 0.6,
+  "window_stride_sec": 2.5,
+  "window_count_for_vote": 3,
+  "min_agree_windows": 2,
+  "tta_time_shift_ms": [-200, 0, 200]
+}

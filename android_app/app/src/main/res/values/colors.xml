@@ -1,0 +1,9 @@
+<resources>
+    <color name="primary">#2D5A27</color>
+    <color name="primary_container">#D4E8D0</color>
+    <color name="secondary">#4A634E</color>
+    <color name="background">#F7FAF5</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="status_listening">#1B5E20</color>
+    <color name="status_paused">#E65100</color>
+</resources>

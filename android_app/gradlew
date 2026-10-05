@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Phoenix Bolotni Gradle wrapper script
+set -e
+
+DIRNAME="$(cd "$(dirname "$0")" && pwd)"
+WRAPPER_PROPERTIES="$DIRNAME/gradle/wrapper/gradle-wrapper.properties"
+
+if command -v gradle >/dev/null 2>&1; then
+    exec gradle "$@"
+fi
+
+# Fallback: if gradle isn't in PATH, locate or run
+echo "Gradle not in PATH. Please install gradle or run in Android Studio."
+exit 1
