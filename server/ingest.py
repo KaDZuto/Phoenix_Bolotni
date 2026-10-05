@@ -21,16 +21,19 @@ from __future__ import annotations
 import logging
 from contextlib import asynccontextmanager
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .audio_io import AudioValidationError, decode_chunk, sha256_bytes, validate_duration
 from .api_devices import router as devices_router
-from .auth import authenticate_device
+from .api_map import router as map_router
+from .auth import authenticate_device, require_dashboard_auth
 from .chunks import (
     ChunkValidationError,
     analyze_chunk_timing,
@@ -71,6 +74,40 @@ app = FastAPI(
 
 #: Административный API реестра устройств (живёт на приватной стороне, не в публичном релее).
 app.include_router(devices_router)
+
+#: Карта активности + дашборд (Задачи 5–6, td3.md разделы 5 и 6).
+app.include_router(map_router)
+
+
+# ---------------------------------------------------------------------------
+# Дашборд (Leaflet) — статика из `server/webapp_map/`
+# ---------------------------------------------------------------------------
+
+WEBAPP_DIR = Path(__file__).resolve().parent / "webapp_map"
+
+if WEBAPP_DIR.is_dir():  # pragma: no cover - в тестах статика может отсутствовать
+    app.mount(
+        "/static",
+        StaticFiles(directory=str(WEBAPP_DIR)),
+        name="static",
+    )
+
+
+@app.get("/", include_in_schema=False)
+def dashboard(_: None = Depends(require_dashboard_auth)) -> FileResponse:
+    """
+    Дашборд карты активности (Задача 5).
+
+    Отдаётся под той же базовой аутентификацией, что и API карты: это внутренний
+    инструмент для заказчика и приглашённых экологов, а не публичный сервис.
+    """
+    index = WEBAPP_DIR / "index.html"
+    if not index.is_file():  # pragma: no cover - защита от неполной установки
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Дашборд не установлен: отсутствует server/webapp_map/index.html",
+        )
+    return FileResponse(str(index))
 
 
 # ---------------------------------------------------------------------------

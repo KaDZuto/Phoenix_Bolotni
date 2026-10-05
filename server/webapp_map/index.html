@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Феникс Болотного — карта активности</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Феникс Болотного</h1>
+    <div class="summary" id="summary">
+      <span class="chip">Загрузка…</span>
+    </div>
+    <div class="actions">
+      <button id="btn-refresh" type="button" title="Перезагрузить слои">Обновить</button>
+      <a id="link-export" href="/api/map/export.geojson" download>GeoJSON</a>
+      <a id="link-export-csv" href="/api/map/export.csv" download>CSV</a>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <section>
+      <h2>Слой</h2>
+      <label class="check"><input type="checkbox" id="layer-devices" checked> Микрофоны</label>
+      <label class="check"><input type="checkbox" id="layer-coverage" checked> Зона покрытия</label>
+      <label class="check"><input type="checkbox" id="layer-grid" checked> Тепловая сетка</label>
+      <label class="check"><input type="checkbox" id="layer-kde"> Граница зоны активности (KDE)</label>
+      <label class="check"><input type="checkbox" id="layer-points"> Все детекции точками</label>
+      <label class="check"><input type="checkbox" id="layer-diffs"> Изменения «до/после»</label>
+    </section>
+
+    <section>
+      <h2>Вид</h2>
+      <select id="species-select" size="6"></select>
+      <p class="hint" id="species-hint">Вид обязателен для зон активности и сравнения периодов.</p>
+    </section>
+
+    <section>
+      <h2>Период</h2>
+      <label>С <input type="date" id="date-from"></label>
+      <label>По <input type="date" id="date-to"></label>
+      <div class="row">
+        <button id="btn-period" type="button">Применить</button>
+        <button id="btn-clear" type="button">Сбросить</button>
+      </div>
+    </section>
+
+    <section id="diff-section">
+      <h2>Сравнение периодов</h2>
+      <label>Период A с <input type="date" id="a-from"></label>
+      <label>Период A по <input type="date" id="a-to"></label>
+      <label>Период B с <input type="date" id="b-from"></label>
+      <label>Период B по <input type="date" id="b-to"></label>
+      <label class="check"><input type="checkbox" id="diff-normalize" checked> Сравнивать интенсивность</label>
+      <button id="btn-diff" type="button">Сравнить</button>
+    </section>
+
+    <section>
+      <h2>Легенда</h2>
+      <div class="legend">
+        <div class="ramp"></div>
+        <div class="ramp-labels"><span>реже</span><span>чаще</span></div>
+      </div>
+      <ul class="states">
+        <li><i class="dot online"></i> на связи</li>
+        <li><i class="dot silent"></i> молчит</li>
+        <li><i class="dot offline"></i> не на связи</li>
+        <li><i class="dot never_seen"></i> не присылал данных</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Что показывает карта</h2>
+      <p class="note">
+        Наблюдения — автоматические предсказания модели, а не экспертная разметка.
+        Зона покрытия показывает, где сервер вообще способен услышать птиц:
+        пустая ячейка вне покрытия не означает, что птиц не было.
+      </p>
+    </section>
+  </aside>
+
+  <main id="map"></main>
+
+  <footer class="statusbar">
+    <span id="status">Готово</span>
+    <span id="legend-meta"></span>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

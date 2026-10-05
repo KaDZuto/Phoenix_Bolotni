@@ -82,7 +82,12 @@ class SpeciesRegistry:
         return {k: groups[k] for k in sorted(groups)}
 
     def catalog(self) -> List[dict]:
-        """Плоский список видов с русскими названиями (для легенды карты и экспорта)."""
+        """
+        Плоский список видов фауны РФ с русскими названиями (легенда карты, экспорт).
+
+        Список — весь whitelist, а не только 16 классов модели: экологу нужен справочник
+        фауны площадки, а факт распознавания конкретного вида показан флагом `in_model`.
+        """
         return [
             {
                 "slug": slug,
@@ -91,7 +96,7 @@ class SpeciesRegistry:
                 "habitat_ru": HABITAT_LABELS_RU.get(self.habitat(slug), self.habitat(slug)),
                 "in_model": slug in self._model_class_set,
             }
-            for slug in self.supported_slugs()
+            for slug in self.slugs
         ]
 
 
