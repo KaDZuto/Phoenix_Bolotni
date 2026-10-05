@@ -32,7 +32,7 @@ from .devices import (
     set_device_active,
     update_device,
 )
-from .models import Device, DeviceEvent
+from .models import DeviceEvent
 
 logger = logging.getLogger(__name__)
 

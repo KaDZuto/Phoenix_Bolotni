@@ -94,6 +94,12 @@ class Settings:
     spool_ttl_sec: float
     worker_poll_interval_sec: float
     worker_batch_size: int
+    #: Гонять воркер внутри процесса API. По умолчанию включено: байты чанка лежат
+    #: в памяти принявшего их процесса, поэтому отдельный процесс воркера не сможет
+    #: их забрать и пометит задание как `expired` (тихая потеря наблюдения).
+    #: Выключать только если очередь вынесена в общее хранилище.
+    inline_worker: bool
+    inline_worker_id: str
 
     # --- Дедупликация детекций на границах перекрывающихся чанков ---
     dedup_overlap_frac: float
@@ -152,6 +158,8 @@ def get_settings() -> Settings:
         spool_ttl_sec=_env_float("PHOENIX_SPOOL_TTL_SEC", 300.0),
         worker_poll_interval_sec=_env_float("PHOENIX_WORKER_POLL_INTERVAL_SEC", 0.25),
         worker_batch_size=_env_int("PHOENIX_WORKER_BATCH_SIZE", 1),
+        inline_worker=_env_bool("PHOENIX_INLINE_WORKER", True),
+        inline_worker_id=_env_str("PHOENIX_INLINE_WORKER_ID", "inline-1"),
         dedup_overlap_frac=_env_float("PHOENIX_DEDUP_OVERLAP_FRAC", 0.5),
         gap_alert_sec=_env_float("PHOENIX_GAP_ALERT_SEC", 180.0),
         gap_monitor_interval_sec=_env_float("PHOENIX_GAP_MONITOR_INTERVAL_SEC", 60.0),

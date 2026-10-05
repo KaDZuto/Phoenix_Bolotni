@@ -1,0 +1,118 @@
+# Phoenix_Bolotni — серверный распознаватель (Задача 7, td3.md раздел 3, п. «Развёртывание»).
+#
+# Поднимает весь стек локально одной командой:
+#
+#     cd server
+#     cp .env.example .env          # и заменить секреты
+#     docker compose up --build
+#
+# Дашборд карты: http://localhost:8000/
+#
+# КРИТИЧНО ДЛЯ ПОНИМАНИЯ: в этом стеке нет Redis и отдельного сервиса воркера.
+# Обе вещи — сознательные решения, а не недосмотр, и обе описаны в `README.md`
+# (раздел «Чего этот стек не умеет»): аудио не сохраняется вообще, поэтому очередь
+# живёт в памяти процесса, и воркер обязан быть в нём же.
+
+name: phoenix-bolotni-server
+
+services:
+  # --- БД: Postgres + PostGIS -------------------------------------------------
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-phoenix}
+      POSTGRES_USER: ${POSTGRES_USER:-phoenix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-CHANGE_ME}
+      # Ускоряет первый запуск: файловая система хоста медленнее tmpfs.
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      # Проброс наружу нужен только для отладки и для `psql` с машины разработчика.
+      # В бою порт закрыт: к БД обращается только сервер во внутренней сети compose.
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      # Ждём именно готовности принимать подключения, а не просто «процесс жив»:
+      # иначе api успеет упасть на подключении и молча перезапустится по restart.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-phoenix} -d ${POSTGRES_DB:-phoenix}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  # --- API: приём аудио + карта + дашборд -------------------------------------
+  api:
+    build:
+      # Контекст — корень репозитория: образу нужен и `server/`, и репозиторий модели.
+      context: ..
+      dockerfile: server/Dockerfile
+    image: phoenix-server:latest
+    environment:
+      PHOENIX_DATABASE_URL: >-
+        postgresql+psycopg://${POSTGRES_USER:-phoenix}:${POSTGRES_PASSWORD:-CHANGE_ME}@db:5432/${POSTGRES_DB:-phoenix}
+      # --- Доступ. Здесь и дальше только для локального запуска; в бою эти
+      # значения задаются снаружи (см. README, раздел «Что публично, а что за VPN»).
+      PHOENIX_ADMIN_TOKEN: ${PHOENIX_ADMIN_TOKEN:-CHANGE_ME_admin_token}
+      PHOENIX_REGISTRATION_TOKEN: ${PHOENIX_REGISTRATION_TOKEN:-CHANGE_ME_registration_token}
+      PHOENIX_DASHBOARD_AUTH: ${PHOENIX_DASHBOARD_AUTH:-false}
+      PHOENIX_DASHBOARD_USER: ${PHOENIX_DASHBOARD_USER:-ecologist}
+      PHOENIX_DASHBOARD_PASSWORD: ${PHOENIX_DASHBOARD_PASSWORD:-phoenix}
+      # --- Приём и обработка
+      PHOENIX_INLINE_WORKER: ${PHOENIX_INLINE_WORKER:-true}
+      PHOENIX_SPOOL_MAX_BYTES: ${PHOENIX_SPOOL_MAX_BYTES:-268435456}
+      PHOENIX_SPOOL_TTL_SEC: ${PHOENIX_SPOOL_TTL_SEC:-300}
+      PHOENIX_USE_TTA: ${PHOENIX_USE_TTA:-true}
+      PHOENIX_GAP_ALERT_SEC: ${PHOENIX_GAP_ALERT_SEC:-180}
+      PHOENIX_ALERT_LOG: /app/server/data/alerts.log
+      PHOENIX_DEBUG_KEEP_AUDIO: ${PHOENIX_DEBUG_KEEP_AUDIO:-false}
+    ports:
+      # `127.0.0.1` — сознательно: локальный стек не должен выставлять приём загрузок
+      # в интернет. Для доступа с других машин адрес меняется явно.
+      - "${PHOENIX_BIND:-127.0.0.1}:${PHOENIX_PORT:-8000}:8000"
+    volumes:
+      # Только данные (SQLite dev, журнал алертов, опциональное отладочное аудио).
+      # Код в образ запечён — иначе правка Python-файла требовала бы пересборки.
+      - phoenix-data:/app/server/data
+      # Репозиторий модели. Нужен, чтобы ONNX-модель не тащить в каждый образ:
+      # она весит десятки мегабайт и меняется редко, а `models/bird_model.onnx`
+      # в git хранится указателем git-LFS. Монтируется только на чтение.
+      - "${MODEL_REPO_PATH:-../}:/app/model_repo:ro"
+    depends_on:
+      db:
+        condition: service_healthy
+    # Миграции накатываются при старте процесса (`init_db` -> `alembic upgrade head`
+    # под advisory-локом), поэтому отдельного сервиса миграций не нужно, а гонки
+    # между двумя стартующими контейнерами невозможны.
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          # Потолок памяти примерно втрое выше spool: пик — байты очереди плюс
+          # модель в памяти плюс декодирование чанков. При превышении лимита
+          # контейнер перезапустится, и задания станут `expired` — заметно в логах.
+          memory: ${PHOENIX_API_MEMORY:-1g}
+
+  # --- Мониторинг разрывов связи ------------------------------------------------
+  # Аудио не нужно, БД общая, поэтому вынесен в отдельный процесс: в нём нет
+  # тяжёлой модели, и его можно перезапускать независимо от приёма загрузок.
+  alerts:
+    image: phoenix-server:latest
+    environment:
+      PHOENIX_DATABASE_URL: >-
+        postgresql+psycopg://${POSTGRES_USER:-phoenix}:${POSTGRES_PASSWORD:-CHANGE_ME}@db:5432/${POSTGRES_DB:-phoenix}
+      PHOENIX_GAP_ALERT_SEC: ${PHOENIX_GAP_ALERT_SEC:-180}
+      PHOENIX_GAP_MONITOR_INTERVAL_SEC: ${PHOENIX_GAP_MONITOR_INTERVAL_SEC:-60}
+      PHOENIX_ALERT_LOG: /app/server/data/alerts.log
+      PHOENIX_ALERT_WEBHOOK: ${PHOENIX_ALERT_WEBHOOK:-}
+    command: ["python", "-m", "server.alerts", "--watch"]
+    volumes:
+      - phoenix-data:/app/server/data
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  phoenix-data:

@@ -16,7 +16,6 @@ from datetime import timedelta
 import pytest
 
 from server.analytics import DetectionFilter, query_detections
-from server.db import session_scope
 from server.geo import haversine_m
 from server.geohash import decode_bbox, encode
 from server.models import Detection, Device, hash_token, utcnow

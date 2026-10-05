@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import io
-import os
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
@@ -28,6 +27,10 @@ def _isolated_db(tmp_path, monkeypatch):
     monkeypatch.setenv("PHOENIX_STORE_RAW_WINDOWS", "false")
     monkeypatch.setenv("PHOENIX_GAP_ALERT_SEC", "180")
     monkeypatch.setenv("PHOENIX_SPOOL_MAX_BYTES", str(8 * 1024 * 1024))
+    # Тесты сами запускают воркер через ChunkWorker.run_once и проверяют его
+    # результат. Фоновый воркер приложения забирал бы те же задания первым,
+    # и результат зависел бы от порядка потоков, а не от кода теста.
+    monkeypatch.setenv("PHOENIX_INLINE_WORKER", "false")
 
     from server import config as config_module
     from server import db as db_module
@@ -40,6 +43,20 @@ def _isolated_db(tmp_path, monkeypatch):
     spool_module.get_spool().clear()
     db_module.reset_engine()
     config_module.reload_settings()
+
+
+def open_session():
+    """
+    Новая сессия БД для чтения результата, сделанного другим соединением.
+
+    CLI и воркер открывают собственные сессии и коммитят, поэтому держать одну
+    долгоживущую сессию в тесте нельзя — она не увидит их изменения. Вызывается
+    как `open_session()` и закрывается на чтении, чтобы данные были актуальными.
+    """
+    from server.db import get_engine
+    from sqlalchemy.orm import sessionmaker
+
+    return sessionmaker(bind=get_engine())()
 
 
 @pytest.fixture(autouse=True)
@@ -190,4 +207,18 @@ class ScriptedAnalyzer:
 
 @pytest.fixture
 def scripted_analyzer():
-    return ScriptedAnalyzer()
+    """
+    Подменить анализатор на заглушку, выдающую одну детекцию `anas_platyrhynchos`.
+
+    Подмена идёт через `confirmation.set_chunk_analyzer_factory`, а не присваиванием
+    объекта: анализатор создаётся лениво и кэшируется в модуле, поэтому прямая подмена
+    работала бы только до первого обращения к нему.
+
+    Без заглушки тесты упёрлись бы в `models/bird_model.onnx`, который в репозитории
+    хранится как git-LFS-указатель (133 байта), то есть настоящая модель недоступна.
+    """
+    from server import confirmation
+
+    analyzer = ScriptedAnalyzer(spans=[("anas_platyrhynchos", 0.0, 3.0)])
+    confirmation.set_chunk_analyzer_factory(lambda: analyzer)
+    return analyzer

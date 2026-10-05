@@ -10,7 +10,6 @@ from __future__ import annotations
 import pytest
 
 from server.auth import find_device_by_token
-from server.db import session_scope
 from server.devices import (
     DeviceValidationError,
     device_status,

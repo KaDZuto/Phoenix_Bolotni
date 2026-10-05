@@ -15,7 +15,6 @@ from datetime import timedelta
 
 import pytest
 
-from server.db import session_scope
 from server.ingest import app
 from server.models import Detection, Device, hash_token, utcnow
 

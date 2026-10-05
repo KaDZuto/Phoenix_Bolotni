@@ -31,7 +31,12 @@ from server.models import Base  # noqa: E402
 
 config = context.config
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # `disable_existing_loggers=False` обязателен. По умолчанию fileConfig
+    # выключает все логгеры, которых нет в alembic.ini, — то есть после запуска
+    # миграций логи приложения (`server.*`) замолкали навсегда, а вместе с ними
+    # и алерты о разрывах связи. Отключение логгеров необратимо: `logging`
+    # не умеет их включить обратно без явного `setLevel`.
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 settings = get_settings()
 config.set_main_option("sqlalchemy.url", settings.database_url)

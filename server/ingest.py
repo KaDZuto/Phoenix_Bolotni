@@ -18,8 +18,9 @@ HTTPS без VPN».
 
 from __future__ import annotations
 
+import asyncio
 import logging
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -57,9 +58,53 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Схема создаётся на старте (в проде её всё равно накатывает `alembic upgrade head`)."""
+    """
+    Старт приложения: схема БД и, по необходимости, воркер в фоне.
+
+    Воркер по умолчанию **внутри процесса API**, и это не выбор удобства, а следствие
+    требования «аудио не сохраняется»: байты чанка лежат в оперативной памяти того
+    процесса, который принял загрузку. Отдельный контейнер воркера увидит в БД задание,
+    но не найдёт байтов и пометит его как `expired` — тихая потеря наблюдения.
+
+    Если воркер всё же запускают отдельным процессом (`python -m server.queue_worker`),
+    то очередь обязана быть общей, а это в данной схеме не так.
+    """
     init_db()
-    yield
+    worker_task = None
+    if get_settings().inline_worker:
+        worker_task = asyncio.create_task(_run_inline_worker())
+        logger.info("Воркер запущен внутри процесса API")
+    try:
+        yield
+    finally:
+        if worker_task is not None:
+            worker_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await worker_task
+
+
+async def _run_inline_worker() -> None:
+    """
+    Фоновой цикл воркера, живущий в процессе API.
+
+    Реализовано на `asyncio.to_thread`, а не на пуле потоков с busy-wait: `run_forever`
+    блокирующий и спит между опросами, поэтому блокировать им event loop нельзя — иначе
+    перестаёт отвечать `/ingest`, то есть перестаёт принимать аудио.
+    """
+    from .queue_worker import ChunkWorker
+
+    settings = get_settings()
+    worker = ChunkWorker(worker_id=settings.inline_worker_id)
+    while True:
+        try:
+            done = await asyncio.to_thread(worker.run_once)
+            if not done:
+                await asyncio.sleep(settings.worker_poll_interval_sec)
+        except asyncio.CancelledError:
+            raise
+        except Exception:  # noqa: BLE001 - фоновой воркер не должен умирать
+            logger.exception("Ошибка воркера; продолжаю")
+            await asyncio.sleep(settings.worker_poll_interval_sec)
 
 
 app = FastAPI(

@@ -27,7 +27,7 @@ from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 import numpy as np
 
 from .analytics import DetectionFilter, DetectionPoint, query_detections
-from .geo import haversine_m, point_feature, polygon_feature
+from .geo import haversine_m, polygon_feature
 from .geohash import (
     cell_bbox_polygon,
     cell_center,

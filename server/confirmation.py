@@ -34,7 +34,7 @@ import importlib
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Callable, Dict, List, Optional, Sequence
 
 from .config import REPO_ROOT, get_settings
 
@@ -625,8 +625,6 @@ class ChunkAnalyzer:
     # -- локальная нарезка окон (запасной путь) --------------------------
     def _score_windows_locally(self, audio, sr: int) -> List[WindowPrediction]:
         """Нарезка перекрывающимися окнами + батч-инференс (когда нет predict_sliding_window)."""
-        import numpy as np
-
         params = self.params
         total_samples = int(len(audio))
         window_size = int(params.target_sr * params.clip_seconds)
@@ -662,17 +660,28 @@ class ChunkAnalyzer:
 
 
 _analyzer: Optional[ChunkAnalyzer] = None
+#: Фабрика анализатора. Подменяется в тестах: настоящий `ChunkAnalyzer` грузит ONNX,
+#: а в репозитории модель хранится как git-LFS-указатель и недоступна.
+_analyzer_factory: Optional[Callable[[], ChunkAnalyzer]] = None
 
 
 def get_chunk_analyzer() -> ChunkAnalyzer:
     """Ленивая инициализация общего анализатора (модель грузится один раз на процесс)."""
     global _analyzer
     if _analyzer is None:
-        _analyzer = ChunkAnalyzer()
+        _analyzer = _analyzer_factory() if _analyzer_factory else ChunkAnalyzer()
     return _analyzer
+
+
+def set_chunk_analyzer_factory(factory: Optional[Callable[[], ChunkAnalyzer]]) -> None:
+    """Подменить создание анализатора (только для тестов)."""
+    global _analyzer, _analyzer_factory
+    _analyzer_factory = factory
+    _analyzer = None
 
 
 def reset_chunk_analyzer() -> None:
     """Сбросить кэш анализатора (используется в тестах)."""
-    global _analyzer
+    global _analyzer, _analyzer_factory
     _analyzer = None
+    _analyzer_factory = None

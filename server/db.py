@@ -96,28 +96,56 @@ def get_db() -> Iterator[Session]:
 
 def init_db() -> None:
     """
-    Создать схему из моделей.
+    Привести схему БД в рабочее состояние при старте процесса.
 
-    Используется только для локальной разработки и тестов (SQLite). В продакшене схема
-    создаётся и обновляется только через `alembic upgrade head` (см. `server/alembic/`),
-    чтобы PostGIS-геометрия, GiST-индексы и партиционирование контролировались миграциями.
+    Развилка по диалекту принципиальна:
+
+    * **Postgres (прод)** — только `alembic upgrade head`. `create_all` здесь недопустим:
+      он создал бы таблицы вне версионирования, и следующая же миграция упала бы с
+      «relation already exists», а PostGIS-геометрия, GiST-индекс и триггер
+      синхронизации `lat/lon` → `geom` остались бы не созданными. Плюс `alembic_version`
+      не появился бы, и Alembic решил бы, что база пустая.
+    * **SQLite (разработка и тесты)** — `create_all`: миграции там гонять каждый раз
+      неудобно, а проверка их актуальности живёт в `test_migrations.py`.
+
+    Конкуренция (`api` и `worker` поднимаются одновременно) снимается advisory-блокировкой
+    Postgres: без неё два процесса могли бы одновременно начать одну и ту же миграцию.
     """
     engine = get_engine()
-    Base.metadata.create_all(engine)
     if engine.dialect.name == "postgresql":
-        _ensure_postgis(engine)
+        _migrate_postgres(engine)
+        return
+
+    Base.metadata.create_all(engine)
     logger.info("Схема БД готова (%s)", engine.dialect.name)
 
 
-def _ensure_postgis(engine: Engine) -> None:  # pragma: no cover - только для Postgres
-    """Включить расширение PostGIS, если его ещё нет (идемпотентно)."""
-    with engine.begin() as conn:
+def _migrate_postgres(engine: Engine) -> None:  # pragma: no cover - нужен сервер
+    """Накатить миграции под advisory-локом, защищая от гонки между процессами."""
+    from alembic import command
+    from alembic.config import Config
+
+    from .config import SERVER_DIR
+
+    with engine.connect() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis"))
-        # Геосинхронизацию обеспечивает хук `models._fill_detection_geom`,
-        # здесь только GiST-индекс для радиусных выборок.
-        conn.execute(
-            text("CREATE INDEX IF NOT EXISTS ix_detections_geom_gist ON detections USING gist (geom)")
-        )
+        conn.commit()
+        # pg_advisory_lock блокирует на уровне сессии: держим соединение открытым
+        # ровно на время миграции.
+        conn.execute(text("SELECT pg_advisory_lock(hashtext('phoenix_schema_migrations'))"))
+        conn.commit()
+
+    try:
+        config = Config(str(SERVER_DIR / "alembic.ini"))
+        command.upgrade(config, "head")
+    finally:
+        with engine.connect() as conn:
+            conn.execute(
+                text("SELECT pg_advisory_unlock(hashtext('phoenix_schema_migrations'))")
+            )
+            conn.commit()
+
+    logger.info("Схема БД актуальна (postgres, alembic head)")
 
 
 def reset_engine() -> None:

@@ -126,7 +126,6 @@ def _build_filter(
     require_location: bool = True,
     hours: Optional[str] = None,
 ) -> DetectionFilter:
-    registry = get_species_registry()
     species_list = _species_filter(species)
     try:
         parsed_bbox = parse_bbox(bbox)

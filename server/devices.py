@@ -18,7 +18,6 @@ from sqlalchemy.orm import Session
 from .auth import register_device_token
 from .geo import validate_coordinates
 from .models import (
-    DEVICE_TYPE_MOBILE,
     DEVICE_TYPE_STATIONARY,
     DEVICE_TYPES,
     EVENT_REGISTERED,

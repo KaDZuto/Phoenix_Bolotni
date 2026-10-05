@@ -15,9 +15,9 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Tuple
 
-from sqlalchemy import Integer, func, or_, select
+from sqlalchemy import Integer, func, select
 from sqlalchemy.orm import Session
 
 from .geo import bbox_around, haversine_m

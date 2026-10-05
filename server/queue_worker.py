@@ -19,9 +19,8 @@ import os
 import socket
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
-from typing import Dict, List, Optional
+from datetime import datetime, timezone
+from typing import List, Optional
 
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
@@ -31,7 +30,7 @@ from .chunks import overlap_zone
 from .confirmation import ChunkAnalyzer, ConfirmationResult, get_chunk_analyzer
 from .config import SERVER_DIR, get_settings
 from .db import init_db, session_scope
-from .dedup import Interval, dedup_detections, find_duplicate, to_interval
+from .dedup import Interval, dedup_detections, find_duplicate
 from .models import (
     EVENT_ERROR,
     JOB_DONE,
@@ -312,7 +311,6 @@ class ChunkWorker:
         Явная P2-опция «послушать проблемный чанк»: пишет только последние N чанков
         с коротким TTL (по умолчанию выключено — см. `PHOENIX_DEBUG_KEEP_AUDIO`).
         """
-        settings = get_settings()
         try:
             DEBUG_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
             target = DEBUG_AUDIO_DIR / f"{job_id}_{device_id}.bin"

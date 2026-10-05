@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import os
+import time
 from pathlib import Path
 
 import pytest
@@ -25,6 +26,17 @@ CHUNK_SEC = 25.0
 NUM_CHUNKS = 3
 
 
+def post(client, token: str, audio: bytes, *, seq: int):
+    """Отправить чанк на `POST /ingest` (обёртка над `multipart_chunk`)."""
+    payload = multipart_chunk(audio, seq=seq, started_at=now_ts(-CHUNK_SEC))
+    return client.post(
+        "/ingest",
+        files=payload["files"],
+        data=payload["data"],
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+
 def directory_size(path: Path) -> int:
     """Суммарный размер файлов в каталоге (байт)."""
     if not path.exists():
@@ -37,6 +49,67 @@ def device(db_session):
     registered = register_device(db_session, name="Микрофон поймы", lat=55.75, lon=37.62)
     db_session.commit()
     return registered
+
+
+def test_inline_worker_processes_queue(scripted_analyzer, device, db_session, monkeypatch):
+    """
+    Воркер по умолчанию живёт внутри процесса API.
+
+    Причина не в удобстве, а в требовании «аудио не сохраняется»: байты чанка лежат
+    в памяти принявшего их процесса. Отдельный контейнер воркера увидит в БД
+    задание, но не найдёт байтов и пометит его `expired` — тихая потеря наблюдения.
+    """
+    from fastapi.testclient import TestClient
+
+    from server import config as config_module
+    from server.ingest import app
+
+    monkeypatch.setenv("PHOENIX_INLINE_WORKER", "true")
+    config_module.reload_settings()
+    assert config_module.get_settings().inline_worker is True
+
+    audio = make_wav_bytes(duration_sec=CHUNK_SEC)
+    # Клиент создаётся здесь, а не фикстурой: фоновый воркер запускается в lifespan,
+    # то есть уже после того, как конфигурация перечитана выше.
+    with TestClient(app) as client:
+        response = post(client, device.token, audio, seq=1)
+        assert response.status_code == 202
+
+        # Ожидание результата вместо фиксированного sleep: тест не должен зависеть
+        # от того, успел ли воркер проснуться за 0.25 с.
+        deadline = time.monotonic() + 20
+        while time.monotonic() < deadline:
+            db_session.expire_all()
+            if db_session.query(Detection).count():
+                break
+            time.sleep(0.05)
+
+    assert db_session.query(Detection).count() >= 1
+    # Байты освобождены сразу после инференса — это ядро требования Задачи 4.
+    assert get_spool().stats()["chunks_in_memory"] == 0
+
+
+def test_separate_worker_process_would_expire_jobs(client, device, db_session):
+    """
+    Отдельный процесс воркера не находит байтов и честно помечает задание `expired`.
+
+    Это поведение фиксируется намеренно: оно объясняет, почему воркер по умолчанию
+    встроен в процесс API, и запрещает «просто добавить второй контейнер воркера»
+    без выноса очереди в общее хранилище.
+    """
+    from server.models import JOB_EXPIRED, Job
+
+    audio = make_wav_bytes(duration_sec=CHUNK_SEC)
+    assert post(client, device.token, audio, seq=1).status_code == 202
+
+    # Эмулируем перезапуск процесса API: память очищена, а задание в БД осталось.
+    get_spool().clear()
+
+    results = ChunkWorker(worker_id="other-process").run_once(limit=1)
+    assert [result.status for result in results] == [JOB_EXPIRED]
+    db_session.expire_all()
+    assert db_session.query(Job).filter(Job.status == JOB_EXPIRED).count() == 1
+    assert db_session.query(Detection).count() == 0
 
 
 def test_no_audio_bytes_remain_after_processing(client, device, db_session, tmp_path):

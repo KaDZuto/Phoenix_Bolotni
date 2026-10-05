@@ -27,6 +27,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .config import get_settings
+from .db import session_scope
 from .models import (
     EVENT_GAP,
     Device,
@@ -245,8 +246,6 @@ def watch_loop(interval_sec: Optional[float] = None, notify: bool = True) -> Non
     settings = get_settings()
     interval = interval_sec if interval_sec is not None else settings.gap_monitor_interval_sec
     logger.info("Мониторинг разрывов запущен (интервал %.0f с)", interval)
-    from .db import session_scope
-
     while True:
         try:
             with session_scope() as session:
@@ -254,3 +253,46 @@ def watch_loop(interval_sec: Optional[float] = None, notify: bool = True) -> Non
         except Exception as exc:  # noqa: BLE001 - фоновая петля не должна падать
             logger.exception("Ошибка мониторинга разрывов: %s", exc)
         time.sleep(interval)
+
+
+def main(argv: Optional[List[str]] = None) -> int:  # pragma: no cover - точка входа
+    """Точка входа сервиса мониторинга: `python -m server.alerts --watch`."""
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Мониторинг разрывов связи Phoenix_Bolotni (алерты оператору)"
+    )
+    parser.add_argument("--watch", action="store_true", help="Бесконечный цикл проверок")
+    parser.add_argument("--once", action="store_true", help="Одна проверка и выход")
+    parser.add_argument("--interval", type=float, default=None, help="Интервал, секунд")
+    parser.add_argument("--notify", action="store_true", help="Отправлять алерты (по умолчанию да)")
+    parser.add_argument("--log-level", default="INFO")
+    args = parser.parse_args(argv)
+
+    logging.basicConfig(
+        level=getattr(logging, str(args.log_level).upper(), logging.INFO),
+        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    )
+    # Схема готовится до первого запроса: без этого сервис, стартующий на чистой БД,
+    # падал бы с «no such table: devices» вместо нормальной работы.
+    from .db import init_db
+
+    init_db()
+
+    if args.once:
+        with session_scope() as session:
+            report = build_gap_report(session, notify=args.notify)
+        print(
+            f"Устройств: {report.devices_checked}, не на связи: {len(report.stale)}, "
+            f"событий за сутки: {len(report.gap_events)}"
+        )
+        for item in report.stale:
+            print(f"  {item['device_id']}: {item['message']}")
+        return 0
+
+    watch_loop(interval_sec=args.interval, notify=args.notify)
+    return 0
+
+
+if __name__ == "__main__":  # pragma: no cover
+    raise SystemExit(main())

@@ -12,14 +12,14 @@ from datetime import timedelta
 
 import pytest
 
-from server.alerts import build_gap_report, find_stale_devices, recent_gap_events
+from server.alerts import build_gap_report, find_stale_devices
 from server.chunks import (
     ChunkValidationError,
     analyze_chunk_timing,
     gap_event_required,
     parse_timestamp,
 )
-from server.devices import register_device, touch_device_upload
+from server.devices import register_device
 from server.models import (
     EVENT_GAP,
     Detection,
