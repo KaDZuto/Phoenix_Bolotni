@@ -25,7 +25,7 @@ import csv
 import io
 import json
 import logging
-from datetime import date, datetime, time, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -33,7 +33,12 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from sqlalchemy.orm import Session
 
 from .alerts import build_gap_report
-from .analytics import DetectionFilter, query_detections, species_summary
+from .analytics import (
+    DetectionFilter,
+    hourly_histogram,
+    query_detections,
+    species_summary,
+)
 from .auth import require_dashboard_auth
 from .config import get_settings
 from .db import get_db
@@ -92,6 +97,20 @@ def _split_csv(value: Optional[str], field: str) -> Optional[List[str]]:
     return items
 
 
+def _species_filter(species: Optional[str]) -> Optional[List[str]]:
+    """Разобрать список слагов видов и отсечь неизвестные — с явным 422, а не молча."""
+    registry = get_species_registry()
+    species_list = _split_csv(species, "species")
+    if species_list:
+        unknown = registry.unknown_slugs(species_list)
+        if unknown:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Неизвестные виды: {', '.join(unknown)} (см. /api/map/species)",
+            )
+    return species_list
+
+
 def _build_filter(
     species: Optional[str],
     date_from: Optional[str],
@@ -105,16 +124,10 @@ def _build_filter(
     include_duplicates: bool,
     limit: int,
     require_location: bool = True,
+    hours: Optional[str] = None,
 ) -> DetectionFilter:
     registry = get_species_registry()
-    species_list = _split_csv(species, "species")
-    if species_list:
-        unknown = registry.unknown_slugs(species_list)
-        if unknown:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Неизвестные виды: {', '.join(unknown)} (см. /api/map/species)",
-            )
+    species_list = _species_filter(species)
     try:
         parsed_bbox = parse_bbox(bbox)
     except ValueError as exc:
@@ -138,6 +151,15 @@ def _build_filter(
         )
     if radius_m is not None and lat is None:
         radius_m = None
+    hours_list: Optional[List[int]] = None
+    for item in _split_csv(hours, "hours") or []:
+        try:
+            hours_list = (hours_list or []) + [int(item)]
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Некорректный параметр hours={hours!r}: ожидаются часы суток 0..23",
+            ) from exc
     return DetectionFilter(
         species=species_list,
         date_from=_parse_datetime(date_from, "from"),
@@ -147,6 +169,7 @@ def _build_filter(
         radius_m=radius_m,
         device_ids=_split_csv(device_ids, "device_id"),
         min_confidence=min_confidence,
+        hours=hours_list,
         include_duplicates=include_duplicates,
         require_location=require_location,
         limit=min(limit, MAX_SCAN_LIMIT),
@@ -226,6 +249,9 @@ def read_detections(
     radius_m: Optional[float] = Query(None),
     device_id: Optional[str] = Query(None),
     min_confidence: Optional[float] = Query(None, ge=0.0, le=1.0),
+    hours: Optional[str] = Query(
+        None, description="Часы суток UTC через запятую (например 5,6,7 — предрассветные)"
+    ),
     include_duplicates: bool = Query(False),
     limit: int = Query(20_000, ge=1, le=MAX_SCAN_LIMIT),
     session: Session = Depends(get_db),
@@ -235,7 +261,7 @@ def read_detections(
     registry = get_species_registry()
     flt = _build_filter(
         species, date_from, date_to, bbox, lat, lon, radius_m, device_id, min_confidence,
-        include_duplicates, limit,
+        include_duplicates, limit, hours=hours,
     )
     result = query_detections(session, flt)
     truncated = len(result.rows) >= min(limit, MAX_SCAN_LIMIT)
@@ -272,6 +298,7 @@ def read_detections(
             "radius_m": flt.radius_m,
             "device_id": flt.device_ids,
             "min_confidence": flt.min_confidence,
+            "hours": flt.hours,
             "include_duplicates": flt.include_duplicates,
         },
     }
@@ -289,6 +316,7 @@ def read_activity_zones(
     radius_m: Optional[float] = Query(None),
     device_id: Optional[str] = Query(None),
     min_confidence: Optional[float] = Query(None, ge=0.0, le=1.0),
+    hours: Optional[str] = Query(None, description="Часы суток UTC через запятую"),
     include_duplicates: bool = Query(False),
     limit: int = Query(20_000, ge=1, le=MAX_SCAN_LIMIT),
     precision: int = Query(DEFAULT_PRECISION, ge=3, le=10, description="Точность geohash-сетки"),
@@ -319,7 +347,7 @@ def read_activity_zones(
         )
     flt = _build_filter(
         species, date_from, date_to, bbox, lat, lon, radius_m, device_id, min_confidence,
-        include_duplicates, limit,
+        include_duplicates, limit, hours=hours,
     )
     devices = [d for d in list_devices(session, active_only=True) if d.lat is not None and d.lon is not None]
 
@@ -448,6 +476,95 @@ def read_hotspots(
     return JSONResponse(content={**report.to_geojson(), "properties": report.meta})
 
 
+@router.get("/recent")
+def read_recent(
+    species: Optional[str] = Query(None),
+    device_id: Optional[str] = Query(None),
+    hours_back: int = Query(48, ge=1, le=24 * 30, description="Сколько часов назад смотреть"),
+    limit: int = Query(50, ge=1, le=500),
+    session: Session = Depends(get_db),
+    _: None = Depends(require_dashboard_auth),
+) -> dict:
+    """
+    Таблица последних детекций — то, что эколог первым делом открывает, чтобы
+    проверить «а вообще слышно ли что-то сегодня».
+    """
+    registry = get_species_registry()
+    device_names = {d.id: d.name for d in list_devices(session)}
+    flt = DetectionFilter(
+        species=_species_filter(species),
+        device_ids=_split_csv(device_id, "device_id"),
+        date_from=utcnow() - timedelta(hours=hours_back),
+        require_location=False,
+        limit=max(limit, 1000),
+    )
+    result = query_detections(session, flt)
+    # Сортируем по убыванию времени: `query_detections` упорядочивает по возрастанию
+    # (так корректно считается limit по выборке), а таблице нужно «последние N».
+    rows = sorted(result.rows, key=lambda row: row.window_start_ts, reverse=True)[:limit]
+    return {
+        "hours_back": hours_back,
+        "total_matched": result.stats.matched,
+        "detections": [
+            {
+                "id": row.id,
+                "species_slug": row.species_slug,
+                "species_ru": registry.name_ru(row.species_slug),
+                "confidence": round(row.confidence, 4),
+                "device_id": row.device_id,
+                "device_name": device_names.get(row.device_id, row.device_id),
+                "window_start_ts": ensure_utc(row.window_start_ts).isoformat(),
+                "window_end_ts": ensure_utc(row.window_end_ts).isoformat(),
+                "lat": row.lat,
+                "lon": row.lon,
+                "votes": row.votes,
+                "windows_evaluated": row.windows_evaluated,
+                "source": row.source,
+            }
+            for row in rows
+        ],
+    }
+
+
+@router.get("/hourly")
+def read_hourly(
+    species: Optional[str] = Query(None),
+    date_from: Optional[str] = Query(None, alias="from"),
+    date_to: Optional[str] = Query(None, alias="to"),
+    session: Session = Depends(get_db),
+    _: None = Depends(require_dashboard_auth),
+) -> dict:
+    """
+    Распределение детекций по часам суток UTC — «когда активен вид».
+
+    Счёт делается на стороне БД (проход по индексу `(species_slug, window_start_ts)`),
+    поэтому гистограмма дёшева даже за сезон.
+    """
+    registry = get_species_registry()
+    flt = DetectionFilter(
+        species=_species_filter(species),
+        date_from=_parse_datetime(date_from, "from"),
+        date_to=_parse_datetime(date_to, "to", end_of_day=True),
+        require_location=False,
+        limit=MAX_SCAN_LIMIT,
+    )
+    if flt.is_empty():
+        # Пустой фильтр отрисовал бы гистограмму всей таблицы — ограничиваем годом.
+        flt.date_from = utcnow() - timedelta(days=365)
+    counts = hourly_histogram(session, flt)
+    return {
+        "hours_utc": list(range(24)),
+        "counts": counts,
+        "species": {
+            slug: registry.name_ru(slug) for slug in counts if slug in registry
+        },
+        "peak_hour_utc": {
+            slug: max(range(24), key=lambda hour: values[hour])
+            for slug, values in counts.items()
+        },
+    }
+
+
 @router.get("/summary")
 def read_summary(
     date_from: Optional[str] = Query(None, alias="from"),
@@ -526,6 +643,7 @@ def export_csv(
     radius_m: Optional[float] = Query(None),
     device_id: Optional[str] = Query(None),
     min_confidence: Optional[float] = Query(None, ge=0.0, le=1.0),
+    hours: Optional[str] = Query(None, description="Часы суток UTC через запятую"),
     include_duplicates: bool = Query(False),
     limit: int = Query(MAX_EXPORT_ROWS, ge=1, le=MAX_EXPORT_ROWS),
     session: Session = Depends(get_db),
@@ -535,7 +653,7 @@ def export_csv(
     registry = get_species_registry()
     flt = _build_filter(
         species, date_from, date_to, bbox, lat, lon, radius_m, device_id, min_confidence,
-        include_duplicates, min(limit, MAX_EXPORT_ROWS), require_location=False,
+        include_duplicates, min(limit, MAX_EXPORT_ROWS), require_location=False, hours=hours,
     )
     result = query_detections(session, flt)
     buffer = io.StringIO()
@@ -594,6 +712,7 @@ def export_geojson(
     radius_m: Optional[float] = Query(None),
     device_id: Optional[str] = Query(None),
     min_confidence: Optional[float] = Query(None, ge=0.0, le=1.0),
+    hours: Optional[str] = Query(None, description="Часы суток UTC через запятую"),
     include_duplicates: bool = Query(False),
     limit: int = Query(MAX_EXPORT_ROWS, ge=1, le=MAX_EXPORT_ROWS),
     session: Session = Depends(get_db),
@@ -603,7 +722,7 @@ def export_geojson(
     registry = get_species_registry()
     flt = _build_filter(
         species, date_from, date_to, bbox, lat, lon, radius_m, device_id, min_confidence,
-        include_duplicates, min(limit, MAX_EXPORT_ROWS), require_location=False,
+        include_duplicates, min(limit, MAX_EXPORT_ROWS), require_location=False, hours=hours,
     )
     result = query_detections(session, flt)
     located_ids = {point.id for point in result.points}

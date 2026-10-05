@@ -149,6 +149,64 @@ body {
   margin: 6px 0 0;
 }
 
+/* --- ползунок времени суток + гистограмма активности --- */
+.row input[type="range"] { flex: 1 1 0; accent-color: var(--accent); }
+
+.hourbars {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 42px;
+  margin-top: 8px;
+  border-bottom: 1px solid #2b3a51;
+}
+
+.hourbars i {
+  flex: 1 1 0;
+  min-height: 1px;
+  background: #1f6f8b;
+  border-radius: 1px 1px 0 0;
+}
+
+.hourbars i.dim { background: #223047; }
+.hourbars i.marked { background: var(--accent); }
+
+/* --- таблица последних детекций --- */
+table.recent {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+table.recent th {
+  text-align: left;
+  color: var(--muted);
+  font-weight: 500;
+  border-bottom: 1px solid #2b3a51;
+  padding: 3px 4px;
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+}
+
+table.recent td {
+  padding: 3px 4px;
+  border-bottom: 1px solid #1b2637;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
+}
+
+table.recent td.empty {
+  color: var(--muted);
+  text-align: center;
+  padding: 8px;
+}
+
+table.recent tr:hover td { background: var(--panel-2); cursor: default; }
+table.recent .conf { color: var(--accent); }
+
 .legend .ramp {
   height: 10px;
   border-radius: 5px;

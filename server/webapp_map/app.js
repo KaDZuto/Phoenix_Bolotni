@@ -139,12 +139,45 @@ function commonParams() {
   const to = dateOrNull("date-to");
   if (from) params.set("from", from);
   if (to) params.set("to", to);
+  const hours = selectedHours();
+  if (hours) params.set("hours", hours.join(","));
   return params;
 }
 
 function selectedSpecies() {
   const box = el("species-select");
   return Array.from(box.selectedOptions).map((o) => o.value);
+}
+
+/**
+ * Выбранный интервал часов суток UTC как список часов.
+ *
+ * Ползунки задают диапазон; если «начало» позже «конца» (например 22 → 5),
+ * это ночная активность через полночь — тогда берёмся за сутки с wraparound.
+ */
+function selectedHours() {
+  if (el("hours-any").checked) return null;
+  let from = Number(el("hour-from").value);
+  let to = Number(el("hour-to").value);
+  if (from === 0 && to === 23) return null;
+  const hours = [];
+  for (let hour = from; ; hour = (hour + 1) % 24) {
+    hours.push(hour);
+    if (hour === to) break;
+  }
+  return hours;
+}
+
+function hourLabel() {
+  if (el("hours-any").checked) return "Все 24 часа";
+  const from = Number(el("hour-from").value);
+  const to = Number(el("hour-to").value);
+  const wrap = from > to;
+  return `${pad(from)}:00 – ${pad(to + 1)}:00${wrap ? " (через полночь)" : ""}`;
+}
+
+function pad(value) {
+  return String(value).padStart(2, "0");
 }
 
 async function getJSON(url) {
@@ -405,6 +438,65 @@ function fitToData() {
 
 // --------------------------------------------------------------- сценарии
 
+/**
+ * Гистограмма активности по часам суток — рядом с ползунком времени суток.
+ *
+ * Показывает, в какие часы вид вообще активен, чтобы выбор диапазона был осмысленным,
+ * а не «наугад потянуть ползунок».
+ */
+async function loadHourly() {
+  const params = new URLSearchParams();
+  const species = selectedSpecies();
+  if (species.length) params.set("species", species.join(","));
+  const from = dateOrNull("date-from");
+  const to = dateOrNull("date-to");
+  if (from) params.set("from", from);
+  if (to) params.set("to", to);
+
+  const data = await getJSON(`/api/map/hourly?${params.toString()}`);
+  const counts = data.counts || {};
+  const slugs = species.length ? species.filter((s) => counts[s]) : Object.keys(counts);
+  const totals = Array.from({ length: 24 }, (_, hour) =>
+    slugs.reduce((sum, slug) => sum + (counts[slug] ? counts[slug][hour] : 0), 0)
+  );
+  const max = Math.max(1, ...totals);
+
+  const selected = selectedHours();
+  el("hourbars").innerHTML = totals
+    .map((value, hour) => {
+      const inRange = !selected || selected.includes(hour);
+      const cls = value > 0 ? (inRange ? "marked" : "dim") : "";
+      return `<i class="${cls}" style="height:${Math.max(4, (value / max) * 100)}%" title="${pad(hour)}:00 — ${value}"></i>`;
+    })
+    .join("");
+}
+
+async function loadRecent() {
+  const params = new URLSearchParams();
+  const species = selectedSpecies();
+  if (species.length) params.set("species", species.join(","));
+  params.set("hours_back", "48");
+  params.set("limit", "40");
+
+  const data = await getJSON(`/api/map/recent?${params.toString()}`);
+  const tbody = el("recent").querySelector("tbody");
+  if (!data.detections.length) {
+    tbody.innerHTML =
+      '<tr><td colspan="4" class="empty">За последние 48 часов детекций нет</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.detections
+    .map(
+      (row) => `<tr>
+        <td>${fmtDate(row.window_start_ts)} ${row.window_start_ts.slice(11, 16)}</td>
+        <td title="${row.species_slug}">${row.species_ru}</td>
+        <td class="conf">${(row.confidence * 100).toFixed(0)}%</td>
+        <td title="${row.device_id}">${row.device_name}</td>
+      </tr>`
+    )
+    .join("");
+}
+
 async function refreshAll() {
   if (state.busy) return;
   state.busy = true;
@@ -413,6 +505,8 @@ async function refreshAll() {
     await loadSummary();
     await loadDevices();
     await loadCoverage();
+    await loadHourly();
+    await loadRecent();
     await loadZones();
     if (el("layer-points").checked) await loadDetections();
     else dropLayer("points");
@@ -455,6 +549,7 @@ function toISO(date) {
 function bindEvents() {
   el("btn-refresh").addEventListener("click", refreshAll);
   el("btn-period").addEventListener("click", refreshAll);
+  el("btn-hours").addEventListener("click", refreshAll);
   el("btn-diff").addEventListener("click", () => {
     loadDiff().catch((err) => setStatus(`Ошибка сравнения: ${err.message}`, "error"));
   });
@@ -472,7 +567,20 @@ function bindEvents() {
   }
   el("species-select").addEventListener("change", () => {
     loadZones().catch((err) => setStatus(err.message, "error"));
+    loadHourly().catch(() => {});
+    loadRecent().catch(() => {});
   });
+
+  const updateHourLabel = () => {
+    el("hour-label").textContent = hourLabel();
+    // Подсветка полос гистограммы меняется сразу, перезагрузка — по кнопке.
+    loadHourly().catch(() => {});
+  };
+  for (const id of ["hour-from", "hour-to"]) {
+    el(id).addEventListener("input", updateHourLabel);
+  }
+  el("hours-any").addEventListener("change", updateHourLabel);
+  updateHourLabel();
 
   // Ссылки на выгрузку всегда соответствуют текущим фильтрам.
   const updateExports = () => {

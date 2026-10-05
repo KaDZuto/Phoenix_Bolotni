@@ -39,6 +39,20 @@
     </section>
 
     <section>
+      <h2>Время суток (UTC)</h2>
+      <div class="row">
+        <input type="range" id="hour-from" min="0" max="23" value="0">
+        <input type="range" id="hour-to" min="0" max="23" value="23">
+      </div>
+      <label class="check"><input type="checkbox" id="hours-any" checked> Весь сутки</label>
+      <p class="hint" id="hour-label">00:00 – 24:00</p>
+      <div class="hourbars" id="hourbars" aria-hidden="true"></div>
+      <div class="row">
+        <button id="btn-hours" type="button">Применить время суток</button>
+      </div>
+    </section>
+
+    <section>
       <h2>Период</h2>
       <label>С <input type="date" id="date-from"></label>
       <label>По <input type="date" id="date-to"></label>
@@ -48,7 +62,8 @@
       </div>
     </section>
 
-    <section id="diff-section">
+    <section>
+      <h2>Сравнение периодов</h2>
       <h2>Сравнение периодов</h2>
       <label>Период A с <input type="date" id="a-from"></label>
       <label>Период A по <input type="date" id="a-to"></label>
@@ -70,6 +85,16 @@
         <li><i class="dot offline"></i> не на связи</li>
         <li><i class="dot never_seen"></i> не присылал данных</li>
       </ul>
+    </section>
+
+    <section>
+      <h2>Последние детекции</h2>
+      <table class="recent" id="recent">
+        <thead>
+          <tr><th>Когда (UTC)</th><th>Вид</th><th>Уверенность</th><th>Устройство</th></tr>
+        </thead>
+        <tbody><tr><td colspan="4" class="empty">Загрузка…</td></tr></tbody>
+      </table>
     </section>
 
     <section>

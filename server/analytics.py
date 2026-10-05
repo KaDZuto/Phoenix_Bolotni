@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, List, Optional, Sequence, Tuple
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import Integer, func, or_, select
 from sqlalchemy.orm import Session
 
 from .geo import bbox_around, haversine_m
@@ -41,9 +41,15 @@ class DetectionFilter:
     radius_m: Optional[float] = None
     device_ids: Optional[List[str]] = None
     min_confidence: Optional[float] = None
+    #: Часы суток UTC (0..23) для среза «когда именно активен вид» (утро/вечер/ночь).
+    hours: Optional[List[int]] = None
     include_duplicates: bool = False
     require_location: bool = True
     limit: int = 20_000
+
+    def __post_init__(self) -> None:
+        if self.hours:
+            self.hours = sorted({int(hour) % 24 for hour in self.hours})
 
     def is_empty(self) -> bool:
         return all(
@@ -56,6 +62,7 @@ class DetectionFilter:
                 self.center,
                 self.device_ids,
                 self.min_confidence,
+                self.hours,
             )
         )
 
@@ -128,6 +135,14 @@ def _build_query(session: Session, flt: DetectionFilter):
         query = query.where(Detection.device_id.in_(flt.device_ids))
     if flt.min_confidence is not None:
         query = query.where(Detection.confidence >= flt.min_confidence)
+    if flt.hours:
+        # Час окна начала. Часы считаются в UTC — у всех устройств и сервера одна
+        # зона, иначе «утро» у эколога разъезжалось бы с «утром» в базе.
+        if session.get_bind().dialect.name == "postgresql":
+            hour_expr = func.extract("hour", Detection.window_start_ts)
+        else:
+            hour_expr = func.cast(func.strftime("%H", Detection.window_start_ts), Integer)
+        query = query.where(hour_expr.in_(flt.hours))
     if not flt.include_duplicates:
         query = query.where(Detection.duplicate_of_id.is_(None))
     if flt.require_location:
@@ -195,15 +210,22 @@ def query_detections(session: Session, flt: DetectionFilter) -> DetectionQueryRe
         if row.lat is not None and row.lon is not None
     ]
 
+    radius_post_filter = False
     if flt.center is not None and flt.radius_m is not None and not supports_postgis(session):
         # Без PostGIS точный радиус приходится считать в Python: SQL отсекает только
         # bbox, а haversine дочищает «углы» прямоугольника.
         lat, lon = flt.center
         points = [p for p in points if haversine_m(lat, lon, p.lat, p.lon) <= flt.radius_m]
+        radius_post_filter = True
     elif flt.radius_m is not None and flt.center is None:  # pragma: no cover - защита
         points = []
 
-    stats.matched = len(points)
+    # `matched` — число записей, попавших под фильтр. Когда координаты не требулись
+    # (сводки, выгрузки), считаем строки, иначе детекции без lat/lon выпали бы из
+    # счётчика, хотя фильтр их не исключал.
+    stats.matched = (
+        len(rows) if not flt.require_location and not radius_post_filter else len(points)
+    )
     stats.scanned = len(rows)
     stats.took_ms = round((time.perf_counter() - started) * 1000, 2)
     return DetectionQueryResult(rows=rows, points=points, stats=stats)
@@ -214,6 +236,33 @@ def count_detections(session: Session, flt: DetectionFilter) -> int:
     query, _ = _build_query(session, flt)
     count_query = select(func.count()).select_from(query.subquery())
     return int(session.execute(count_query).scalar() or 0)
+
+
+def hourly_histogram(session: Session, flt: Optional[DetectionFilter] = None) -> Dict[str, List[int]]:
+    """
+    Распределение детекций по часам суток UTC: вид → 24 числа.
+
+    Агрегация делается в БД, а не в Python: на сезонных объёмах это разница между
+    секундой и минутой. Часы считаются в UTC — иначе «предрассветные грачи» у разных
+    экологов читались бы по-разному.
+    """
+    flt = flt or DetectionFilter(require_location=False)
+    query, _ = _build_query(session, flt)
+    sub = query.subquery()
+    if session.get_bind().dialect.name == "postgresql":
+        hour_expr = func.extract("hour", sub.c.window_start_ts)
+    else:
+        hour_expr = func.cast(func.strftime("%H", sub.c.window_start_ts), Integer)
+    rows = session.execute(
+        select(sub.c.species_slug, hour_expr, func.count())
+        .group_by(sub.c.species_slug, hour_expr)
+        .order_by(hour_expr)
+    ).all()
+
+    buckets: Dict[str, Dict[int, int]] = {}
+    for slug, hour, count in rows:
+        buckets.setdefault(slug, {})[int(hour)] = int(count)
+    return {slug: [hours.get(hour, 0) for hour in range(24)] for slug, hours in buckets.items()}
 
 
 def species_summary(session: Session, flt: Optional[DetectionFilter] = None) -> List[dict]:

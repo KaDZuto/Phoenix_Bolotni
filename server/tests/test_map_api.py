@@ -324,6 +324,102 @@ def test_hotspots_endpoint(client, seeded):
     assert body["features"][0]["properties"]["species_slug"] == SPECIES
 
 
+def test_recent_returns_newest_first_with_device_names(client, seeded):
+    body = client.get(f"/api/map/recent?species={SPECIES}&hours_back=48&limit=5").json()
+    assert len(body["detections"]) == 5
+    stamps = [d["window_start_ts"] for d in body["detections"]]
+    assert stamps == sorted(stamps, reverse=True), "таблица должна показывать свежие сверху"
+    assert body["detections"][0]["species_ru"] == "Грач"
+    assert body["detections"][0]["device_name"] == "Микрофон dev_a"
+
+
+def test_recent_respects_species_filter(client, seeded):
+    body = client.get(f"/api/map/recent?species={OTHER_SPECIES}&hours_back=48").json()
+    assert body["total_matched"] == 10
+    assert {d["species_slug"] for d in body["detections"]} == {OTHER_SPECIES}
+
+
+def test_recent_window_excludes_old_detections(client, seeded):
+    """Часы назад ограничивают выборку: старые детекции в «последние» не попадают."""
+    # В фикстуре 60 «свежих» детекций и 25 суток назад.
+    assert (
+        client.get(f"/api/map/recent?species={SPECIES}&hours_back=1").json()[
+            "total_matched"
+        ]
+        == 60
+    )
+    assert (
+        client.get(f"/api/map/recent?species={SPECIES}&hours_back=48").json()[
+            "total_matched"
+        ]
+        == 85
+    )
+
+
+def test_hourly_histogram(client, seeded):
+    body = client.get(f"/api/map/hourly?species={SPECIES}").json()
+    assert body["hours_utc"] == list(range(24))
+    counts = body["counts"][SPECIES]
+    assert sum(counts) == 85
+    assert len(counts) == 24
+    assert body["species"][SPECIES] == "Грач"
+    assert 0 <= body["peak_hour_utc"][SPECIES] <= 23
+
+
+def test_hourly_is_utc_bucketed(client, seeded):
+    """Час детекции обязан попасть в корзину по UTC, а не по локальному времени сервера."""
+    body = client.get(f"/api/map/hourly?species={SPECIES}").json()
+    counts = body["counts"][SPECIES]
+    expected = [0] * 24
+    for row in seeded.query(Detection).filter(Detection.species_slug == SPECIES).all():
+        expected[row.window_start_ts.hour] += 1
+    assert counts == expected
+
+
+def test_hourly_filters_by_period(client, seeded):
+    today = utcnow().date().isoformat()
+    body = client.get(f"/api/map/hourly?species={SPECIES}&from={today}&to={today}").json()
+    assert sum(body["counts"][SPECIES]) == 60
+
+
+def test_detections_hours_of_day_filter(client, seeded):
+    body = client.get(f"/api/map/detections?species={SPECIES}&hours=5,6,7").json()
+    hours = body["properties"]["filters"]["hours"]
+    assert hours == [5, 6, 7]
+    for feature in body["features"]:
+        start = feature["properties"]["window_start_ts"]
+        assert int(start[11:13]) in hours
+
+
+def test_detections_hours_wraparound_midnight(client, seeded):
+    """Диапазон 22 → 5 — это ночная активность через полночь."""
+    body = client.get(f"/api/map/detections?species={SPECIES}&hours=22,0,1").json()
+    assert body["properties"]["filters"]["hours"] == [0, 1, 22]
+    for feature in body["features"]:
+        assert int(feature["properties"]["window_start_ts"][11:13]) in (22, 0, 1)
+
+
+def test_hours_normalizes_out_of_range(client, seeded):
+    """Час 99 — это час 3, а не ошибка и не пустая выборка."""
+    body = client.get(f"/api/map/detections?species={SPECIES}&hours=99").json()
+    assert body["properties"]["filters"]["hours"] == [3]
+
+
+def test_bad_hours_rejected(client, seeded):
+    assert client.get("/api/map/detections?hours=abc").status_code == 422
+    assert client.get("/api/map/detections?hours=5,morning").status_code == 422
+
+
+def test_hours_filter_applies_to_export_and_zones(client, seeded):
+    hours = [d["window_start_ts"][11:13] for d in client.get("/api/map/recent?limit=3").json()["detections"]]
+    csv_body = client.get(f"/api/map/export.csv?species={SPECIES}&hours={','.join(hours)}").text
+    assert csv_body.count("\n") >= 2
+    zones = client.get(
+        f"/api/map/activity_zones?species={SPECIES}&hours={','.join(hours)}"
+    ).json()
+    assert zones["layers"]["grid_meta"]["detections_scanned"] >= 1
+
+
 def test_summary_endpoint(client, seeded):
     body = client.get("/api/map/summary").json()
     assert body["devices"]["total"] == 2
