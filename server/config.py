@@ -75,6 +75,12 @@ class Settings:
     whitelist_path: Path
     model_path: Path
     use_tta: bool
+    store_raw_windows: bool
+
+    # --- Регистрация устройств (Задача 2) ---
+    admin_token: Optional[str]
+    registration_token: Optional[str]
+    default_expected_chunk_sec: float
 
     # --- Протокол непрерывной загрузки чанков (Задача 3) ---
     chunk_min_sec: float
@@ -96,6 +102,8 @@ class Settings:
     gap_alert_sec: float
     gap_monitor_interval_sec: float
     alert_log_path: Optional[Path]
+    max_clock_skew_past_sec: float
+    max_clock_ahead_sec: float
 
     # --- Отладочное временное хранение аудио (P2, выключено по умолчанию) ---
     debug_keep_audio: bool
@@ -131,6 +139,10 @@ def get_settings() -> Settings:
         ),
         model_path=Path(_env_str("PHOENIX_MODEL", REPO_ROOT / "models" / "bird_model.onnx")),
         use_tta=_env_bool("PHOENIX_USE_TTA", True),
+        store_raw_windows=_env_bool("PHOENIX_STORE_RAW_WINDOWS", False),
+        admin_token=_env_opt("PHOENIX_ADMIN_TOKEN"),
+        registration_token=_env_opt("PHOENIX_REGISTRATION_TOKEN") or _env_opt("PHOENIX_ADMIN_TOKEN"),
+        default_expected_chunk_sec=_env_float("PHOENIX_DEFAULT_EXPECTED_CHUNK_SEC", 60.0),
         chunk_min_sec=_env_float("PHOENIX_CHUNK_MIN_SEC", 20.0),
         chunk_max_sec=_env_float("PHOENIX_CHUNK_MAX_SEC", 90.0),
         expected_overlap_sec=_env_float("PHOENIX_EXPECTED_OVERLAP_SEC", 5.0),
@@ -146,6 +158,8 @@ def get_settings() -> Settings:
         alert_log_path=(
             Path(_env_str("PHOENIX_ALERT_LOG", "")) if _env_opt("PHOENIX_ALERT_LOG") else None
         ),
+        max_clock_skew_past_sec=_env_float("PHOENIX_MAX_CLOCK_SKEW_PAST_SEC", 120.0),
+        max_clock_ahead_sec=_env_float("PHOENIX_MAX_CLOCK_AHEAD_SEC", 300.0),
         debug_keep_audio=_env_bool("PHOENIX_DEBUG_KEEP_AUDIO", False),
         debug_keep_last_chunks=_env_int("PHOENIX_DEBUG_KEEP_LAST_CHUNKS", 5),
         debug_keep_ttl_sec=_env_float("PHOENIX_DEBUG_KEEP_TTL_SEC", 300.0),
