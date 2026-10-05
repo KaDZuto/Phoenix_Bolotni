@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  collector:
+    build: .
+    container_name: phoenix_bolotni_collector
+    restart: always
+    env_file: .env
+    volumes:
+      - ./collector.db:/app/collector.db
+      - ./tmp:/app/tmp
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

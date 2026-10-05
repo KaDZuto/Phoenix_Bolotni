@@ -15,3 +15,8 @@ dist/
 build/
 .coverage
 htmlcov/
+collector.db*
+telegram_bot/tmp/
+telegram_bot/venv/
+*.zip
+

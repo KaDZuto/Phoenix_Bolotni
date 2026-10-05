@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <title>Точная разметка аудио — Phoenix_Bolotni</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Telegram WebApp JS SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- WaveSurfer.js + Regions Plugin -->
+  <script src="https://unpkg.com/wavesurfer.js@7"></script>
+  <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎧 Точная разметка</h1>
+      <p class="subtitle">Выделите фрагмент песни птицы пальцем на спектрограмме</p>
+    </header>
+
+    <!-- Waveform & Audio Player Card -->
+    <div class="player-card">
+      <div id="waveform"></div>
+      
+      <div class="region-info">
+        <span>Старт: <b id="lblStart">0.00с</b></span>
+        <span>Конец: <b id="lblEnd">0.00с</b></span>
+        <span>Длительность: <b id="lblDuration">0.00с</b></span>
+      </div>
+
+      <div class="controls-row">
+        <button id="btnPlayPause" class="btn-ctrl">▶️ Слушать</button>
+        <button id="btnLoopRegion" class="btn-ctrl">🔁 Зациклить</button>
+        <button id="btnSpeed" class="btn-ctrl">⚡ 1.0x</button>
+        <button id="btnZoomIn" class="btn-ctrl">🔍+</button>
+        <button id="btnZoomOut" class="btn-ctrl">🔍-</button>
+      </div>
+    </div>
+
+    <!-- Species Selection Section -->
+    <section>
+      <div class="section-title">Вид птицы (фауна РФ)</div>
+      
+      <!-- Habitat Filter Tabs -->
+      <div class="habitat-tabs">
+        <button class="tab-btn active" data-habitat="all">🌿 Все</button>
+        <button class="tab-btn" data-habitat="wetland">💧 Болотные</button>
+        <button class="tab-btn" data-habitat="forest">🌲 Лесные</button>
+        <button class="tab-btn" data-habitat="urban">🏙 Городские</button>
+        <button class="tab-btn" data-habitat="field_steppe">🌾 Степные</button>
+      </div>
+
+      <!-- Search Input -->
+      <input type="text" id="speciesSearch" class="search-box" placeholder="🔍 Поиск вида (русское название)...">
+
+      <!-- Species List Container -->
+      <div id="speciesList" class="species-list">
+        <div style="text-align: center; padding: 20px; color: var(--hint-color);">Загрузка списка видов...</div>
+      </div>
+
+      <!-- Custom species input for "➕ Другой вид" -->
+      <div id="customSpeciesBox" class="custom-species-box">
+        <label for="customSpeciesInput" style="font-size: 0.85rem; font-weight: 500;">Название нового вида:</label>
+        <input type="text" id="customSpeciesInput" class="custom-species-input" placeholder="Например: Болотный лунь (Circus aeruginosus)">
+      </div>
+    </section>
+  </div>
+
+  <!-- Bottom Save Action Bar -->
+  <div class="bottom-bar">
+    <button id="btnSave" class="btn-save" disabled>✅ Сохранить фрагмент</button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

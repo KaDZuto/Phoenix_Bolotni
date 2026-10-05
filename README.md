@@ -173,3 +173,13 @@ python scripts/collect_xenocanto.py --species anas_platyrhynchos --max-per-speci
 ```bash
 pytest -q
 ```
+
+---
+
+## 🤖 Сбор полевых данных через Telegram-бот
+
+Для привлечения сторонних экологов и исследователей к пополнению датасета в репозиторий добавлен автономный модуль:
+- 📁 Каталог: [`telegram_bot/`](telegram_bot/)
+- 📖 Подробная инструкция по запуску: [`telegram_bot/INSTRUCTION.md`](telegram_bot/INSTRUCTION.md)
+- Поддерживает быструю разметку аудиосообщений, веб-плеер точной разметки (Telegram Mini App на WaveSurfer.js), защищенный аудио-прокси, хранение в приватном канале Telegram и автоэкспорт пакетов каждые 10 записей.
+
